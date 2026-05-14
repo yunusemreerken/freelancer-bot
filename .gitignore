@@ -1,0 +1,11 @@
+.env
+volumes/
+shared/
+neo4j/
+shared-backup/
+.env.test
+searxng/settings.yml
+searxng/uwsgi*
+README_original.md
+original_backup/
+.env
