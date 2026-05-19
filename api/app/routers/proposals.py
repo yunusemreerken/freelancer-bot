@@ -6,7 +6,7 @@ Proposal CRUD endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -33,6 +33,8 @@ class ProposalStatusUpdate(BaseModel):
 
 
 class ProposalResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     client_id: int
     job_description: str
@@ -42,9 +44,6 @@ class ProposalResponse(BaseModel):
     model: Optional[str]
     status: models.ProposalStatus
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # ── Endpoints ─────────────────────────────────────────

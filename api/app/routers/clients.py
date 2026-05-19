@@ -6,7 +6,7 @@ Client CRUD endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -35,6 +35,8 @@ class ClientUpdate(BaseModel):
 
 
 class ClientResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     platform: models.Platform
@@ -42,9 +44,6 @@ class ClientResponse(BaseModel):
     rating: Optional[str]
     notes: Optional[str]
     created_at: datetime
-
-    class Config:
-        from_attributes = True  # Converts ORM model instances into Pydantic responses.
 
 
 # ── Endpoints ─────────────────────────────────────────

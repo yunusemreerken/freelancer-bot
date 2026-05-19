@@ -1,24 +1,21 @@
-# Freelancer Bot
+# freelancer-bot
 
-Local AI assistant for freelancers on Upwork and Fiverr.
-Runs 100% locally — no paid APIs, no subscriptions, no data leaks.
+Local AI assistant for freelancers. Writes proposals, estimates prices, drafts client replies, and flags project risks — all running on your own machine.
 
-Built as a portfolio project demonstrating local LLM integration, FastAPI backend design, prompt injection defense, and Docker-based service orchestration.
+No paid APIs. No subscriptions. No data sent anywhere.
 
 ---
 
 ## What It Does
 
-Four tools, one UI:
-
-| Tool | Input | Output |
+| Endpoint | Input | Output |
 |---|---|---|
-| **Proposal writer** | Job posting text | Ready-to-edit proposal draft |
-| **Client reply** | Incoming client message | Reply draft |
-| **Price estimator** | Project description | Cost estimate with reasoning |
-| **Decision helper** | Project description | Risk flags and key questions |
+| `/propose` | Job posting text | Proposal draft |
+| `/reply` | Client message | Reply draft |
+| `/estimate` | Project description | Price estimate |
+| `/decide` | Project description | Risk & decision list |
 
-All outputs are drafts — nothing is sent automatically. Human reviews before sending.
+Every output is a **draft** — you review before sending.
 
 ---
 
@@ -27,56 +24,22 @@ All outputs are drafts — nothing is sent automatically. Human reviews before s
 | Layer | Technology |
 |---|---|
 | LLM | Ollama + Phi-3 Mini (3.8B) |
-| Backend | FastAPI (Python) |
+| Backend | FastAPI |
 | Workflow | n8n |
-| Frontend | HTML/CSS/JS (single page, 4 tabs) |
+| Frontend | Single-page HTML (4 tabs) |
 | Database | SQLite |
-| Container | Docker + Docker Compose |
-| Reverse proxy | Caddy (Phase 3) |
-
-Everything is free and self-hosted.
-
----
-
-## Architecture
-
-```
-[User pastes job posting or message]
-        ↓
-  [Single-page UI — 4 tabs]
-        ↓
-  [FastAPI backend]
-        ↓ injection check + validation
-  [n8n workflow]
-        ↓
-  [Phi-3 Mini via Ollama]
-        ↓
-  [Draft response → modal popup]
-        ↓
-  [Human reviews and sends]
-```
-
----
-
-## Security
-
-Two-layer prompt injection defense:
-
-- **Layer 1 — Input guard:** Pattern matching, unicode normalization, RTL override detection, Cyrillic homoglyph detection. Runs before LLM is called. Returns 400 on detection.
-- **Layer 2 — System prompt:** Injection guard embedded in every system prompt. LLM-level second line of defense.
-
-No external API calls — all inference is local.
+| Containers | Docker Compose |
 
 ---
 
 ## Requirements
 
-- Ubuntu 22.04+ (or macOS for dev)
 - Docker + Docker Compose
-- 8 GB RAM minimum (16 GB recommended)
-- 20 GB free disk space
+- 8GB RAM minimum (16GB recommended)
+- 20GB free disk space
+- Ubuntu 22.04+ or macOS
 
-> Tested on: i5-7200U, 16 GB RAM, 512 GB SATA SSD, no GPU
+> Tested on: i5-7200U · 16GB RAM · 512GB SATA SSD · no GPU
 
 ---
 
@@ -87,30 +50,21 @@ No external API calls — all inference is local.
 git clone https://github.com/yunusemreerken/freelancer-bot
 cd freelancer-bot
 
-# 2. Set up environment
+# 2. Configure
 cp .env.example .env
-nano .env  # fill in passwords and your profile
+nano .env
 
-# 3. Start services
+# 3. Start
 docker compose --profile cpu up -d
 
 # 4. Pull the model
 docker exec -it ollama ollama pull phi3:mini
 
-# 5. Open the UI
-open http://localhost:8000
+# 5. Open
+# UI        → http://localhost:8000
+# n8n       → http://localhost:5678
+# Open WebUI → http://localhost:3000
 ```
-
----
-
-## Services
-
-| Service | URL | Purpose |
-|---|---|---|
-| FastAPI + UI | http://localhost:8000 | Main interface |
-| n8n | http://localhost:5678 | Workflow automation |
-| Open WebUI | http://localhost:3000 | Direct chat with LLM |
-| Ollama | http://localhost:11434 | LLM engine (localhost only) |
 
 ---
 
@@ -120,49 +74,66 @@ open http://localhost:8000
 freelancer-bot/
 ├── api/
 │   ├── app/
-│   │   ├── main.py           # FastAPI app, routers
-│   │   ├── prompts.py        # All system prompts
-│   │   ├── config.py         # Freelancer profile + rate card
-│   │   ├── models.py         # SQLAlchemy ORM models
-│   │   ├── database.py       # SQLite setup
-│   │   ├── crud.py           # DB helper functions
-│   │   ├── ollama_client.py  # Ollama HTTP client + injection guard
+│   │   ├── main.py          # FastAPI app, routers, lifespan
+│   │   ├── prompts.py       # All system prompts (centralized)
+│   │   ├── models.py        # SQLAlchemy ORM models
+│   │   ├── config.py        # Freelancer profile + rate card
+│   │   ├── database.py      # SQLite setup + session
+│   │   ├── crud.py          # DB helper functions
+│   │   ├── ollama_client.py # Ollama HTTP client + injection guard
 │   │   └── routers/
-│   │       ├── base.py       # Router factory (DRY)
-│   │       ├── propose.py
-│   │       ├── reply.py
-│   │       ├── estimate.py
-│   │       └── decide.py
+│   │       ├── base.py      # Generic router factory
+│   │       ├── propose.py   # POST /api/v1/propose
+│   │       ├── reply.py     # POST /api/v1/reply
+│   │       ├── estimate.py  # POST /api/v1/estimate
+│   │       ├── decide.py    # POST /api/v1/decide
+│   │       ├── clients.py   # CRUD /api/v1/clients
+│   │       └── proposals.py # CRUD /api/v1/proposals
 │   ├── static/
-│   │   └── index.html        # Single-page UI
+│   │   └── index.html       # Single-page UI, 4 tabs
 │   ├── tests/
-│   │   └── test_endpoints.py # 96 tests, real app + mocked Ollama
+│   │   ├── test_endpoints.py
+│   │   ├── stub_app.py      # Ollama-free test stub (reference)
+│   │   └── pytest.ini
+│   ├── requirements.txt
 │   └── Dockerfile
 ├── n8n/
 │   └── my-workflows/
+│       └── 2026-05-14_proposal-generator.json
+├── docs/
+│   └── notes.md             # Architecture decisions + learning notes
 ├── docker-compose.yml
-├── Caddyfile
 ├── .env.example
-└── docs/
-    └── notes.md              # Architecture decisions and learning notes
+├── Caddyfile                # Reverse proxy (Phase 3)
+└── CLAUDE.md                # AI assistant instructions
 ```
+
+---
+
+## Security
+
+- Prompt injection guard on every endpoint — pattern matching + unicode/RTL/homoglyph detection
+- Input validation — blank inputs and suspicious content rejected before reaching the LLM
+- Ollama bound to `localhost` only
+- n8n protected with basic auth
+- `.env` excluded from git
 
 ---
 
 ## Roadmap
 
 ### Phase 1 — MVP ✅
-- Docker stack (Ollama, n8n, Open WebUI)
+- Docker stack (Ollama + n8n + Open WebUI)
 - Phi-3 Mini model
 - n8n proposal workflow
-- System prompt (EN only)
 
 ### Phase 2 — Backend ✅
 - FastAPI with 4 endpoints
-- Single-page UI (4 tabs)
-- SQLite schema (clients, proposals, messages)
-- Prompt injection guard (input + system prompt layers)
-- 96 passing tests
+- Centralized prompts + injection guard
+- Single-page HTML UI
+- SQLite models + CRUD
+- Client + proposal storage (CRUD endpoints)
+- Full test suite (96 passed)
 
 ### Phase 3 — SaaS ⏳
 - JWT authentication
