@@ -1,41 +1,82 @@
-# 🤖 Freelancer Bot
+# Freelancer Bot
 
-Local AI-powered assistant for freelancers on Upwork and Fiverr.
-Runs 100% locally — no paid APIs, no data leaks, no monthly bills.
+Local AI assistant for freelancers on Upwork and Fiverr.
+Runs 100% locally — no paid APIs, no subscriptions, no data leaks.
+
+Built as a portfolio project demonstrating local LLM integration, FastAPI backend design, prompt injection defense, and Docker-based service orchestration.
 
 ---
 
 ## What It Does
 
-- **Proposal writer** — pastes a job posting, generates a professional proposal (TR/EN)
-- **Client reply** — drafts replies to incoming client messages
-- **Price estimator** — estimates project cost based on your rate card
-- **Decision list** — flags risks and key questions before you accept a project
+Four tools, one UI:
+
+| Tool | Input | Output |
+|---|---|---|
+| **Proposal writer** | Job posting text | Ready-to-edit proposal draft |
+| **Client reply** | Incoming client message | Reply draft |
+| **Price estimator** | Project description | Cost estimate with reasoning |
+| **Decision helper** | Project description | Risk flags and key questions |
+
+All outputs are drafts — nothing is sent automatically. Human reviews before sending.
 
 ---
 
 ## Stack
 
-| Layer | Technology | Cost |
-|---|---|---|
-| LLM | Ollama + Phi-3 Mini | Free |
-| Workflow automation | n8n | Free |
-| Backend | FastAPI (Python) | Free |
-| Frontend | Open WebUI | Free |
-| Database | SQLite → PostgreSQL (SaaS) | Free |
-| Reverse proxy | Caddy | Free |
-| Container | Docker + Docker Compose | Free |
+| Layer | Technology |
+|---|---|
+| LLM | Ollama + Phi-3 Mini (3.8B) |
+| Backend | FastAPI (Python) |
+| Workflow | n8n |
+| Frontend | HTML/CSS/JS (single page, 4 tabs) |
+| Database | SQLite |
+| Container | Docker + Docker Compose |
+| Reverse proxy | Caddy (Phase 3) |
+
+Everything is free and self-hosted.
+
+---
+
+## Architecture
+
+```
+[User pastes job posting or message]
+        ↓
+  [Single-page UI — 4 tabs]
+        ↓
+  [FastAPI backend]
+        ↓ injection check + validation
+  [n8n workflow]
+        ↓
+  [Phi-3 Mini via Ollama]
+        ↓
+  [Draft response → modal popup]
+        ↓
+  [Human reviews and sends]
+```
+
+---
+
+## Security
+
+Two-layer prompt injection defense:
+
+- **Layer 1 — Input guard:** Pattern matching, unicode normalization, RTL override detection, Cyrillic homoglyph detection. Runs before LLM is called. Returns 400 on detection.
+- **Layer 2 — System prompt:** Injection guard embedded in every system prompt. LLM-level second line of defense.
+
+No external API calls — all inference is local.
 
 ---
 
 ## Requirements
 
-- Ubuntu 22.04+
+- Ubuntu 22.04+ (or macOS for dev)
 - Docker + Docker Compose
-- 8GB RAM minimum (16GB recommended)
-- 20GB free disk space (for models)
+- 8 GB RAM minimum (16 GB recommended)
+- 20 GB free disk space
 
-> Tested on: i5-7200U, 16GB RAM, 512GB SATA SSD, no GPU
+> Tested on: i5-7200U, 16 GB RAM, 512 GB SATA SSD, no GPU
 
 ---
 
@@ -43,22 +84,21 @@ Runs 100% locally — no paid APIs, no data leaks, no monthly bills.
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/freelancer-bot
+git clone https://github.com/yunusemreerken/freelancer-bot
 cd freelancer-bot
 
-# 2. Copy and fill env file
+# 2. Set up environment
 cp .env.example .env
-nano .env
+nano .env  # fill in passwords and your profile
 
-# 3. Start all services
-docker compose up -d
+# 3. Start services
+docker compose --profile cpu up -d
 
-# 4. Pull the LLM model
+# 4. Pull the model
 docker exec -it ollama ollama pull phi3:mini
 
 # 5. Open the UI
-# n8n       → http://localhost:5678
-# Open WebUI → http://localhost:3000
+open http://localhost:8000
 ```
 
 ---
@@ -67,11 +107,10 @@ docker exec -it ollama ollama pull phi3:mini
 
 | Service | URL | Purpose |
 |---|---|---|
+| FastAPI + UI | http://localhost:8000 | Main interface |
 | n8n | http://localhost:5678 | Workflow automation |
-| Open WebUI | http://localhost:3000 | Chat interface |
-| Ollama | http://localhost:11434 | LLM engine |
-| FastAPI | http://localhost:8000 | Backend API |
-| SearXNG | http://localhost:8080 | Local web search |
+| Open WebUI | http://localhost:3000 | Direct chat with LLM |
+| Ollama | http://localhost:11434 | LLM engine (localhost only) |
 
 ---
 
@@ -79,85 +118,67 @@ docker exec -it ollama ollama pull phi3:mini
 
 ```
 freelancer-bot/
-├── docker-compose.yml       # All services
-├── .env.example             # Config template (copy to .env)
-├── .gitignore               # .env and db files excluded
-├── Caddyfile                # Reverse proxy (SaaS phase)
-├── caddy-addon/             # Caddy config
-├── flowise/                 # Flowise (unused for now)
-├── searxng/                 # SearXNG config
+├── api/
+│   ├── app/
+│   │   ├── main.py           # FastAPI app, routers
+│   │   ├── prompts.py        # All system prompts
+│   │   ├── config.py         # Freelancer profile + rate card
+│   │   ├── models.py         # SQLAlchemy ORM models
+│   │   ├── database.py       # SQLite setup
+│   │   ├── crud.py           # DB helper functions
+│   │   ├── ollama_client.py  # Ollama HTTP client + injection guard
+│   │   └── routers/
+│   │       ├── base.py       # Router factory (DRY)
+│   │       ├── propose.py
+│   │       ├── reply.py
+│   │       ├── estimate.py
+│   │       └── decide.py
+│   ├── static/
+│   │   └── index.html        # Single-page UI
+│   ├── tests/
+│   │   └── test_endpoints.py # 96 tests, real app + mocked Ollama
+│   └── Dockerfile
 ├── n8n/
-│   └── backup/workflows/    # n8n workflow exports
-├── n8n-tool-workflows/      # Tool-specific workflows
-├── assets/                  # Images and docs
-└── README.md
-```
-
-> ⚠️ Some folders (flowise, searxng) are kept from the base repo for future use.
-> They are not active in the current setup.
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and fill in:
-
-```env
-# n8n
-N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=your_strong_password
-WEBHOOK_SECRET=your_random_secret
-
-# Postgres (SaaS phase)
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
-
-# Timezone
-GENERIC_TIMEZONE=Europe/Istanbul
+│   └── my-workflows/
+├── docker-compose.yml
+├── Caddyfile
+├── .env.example
+└── docs/
+    └── notes.md              # Architecture decisions and learning notes
 ```
 
 ---
 
 ## Roadmap
 
-### Phase 1 — MVP ✅ (current)
-- [x] Docker stack (Ollama, n8n, Open WebUI)
-- [ ] FastAPI backend with 4 endpoints
-- [ ] Bilingual prompt system (TR/EN)
-- [ ] Basic HTML UI
+### Phase 1 — MVP ✅
+- Docker stack (Ollama, n8n, Open WebUI)
+- Phi-3 Mini model
+- n8n proposal workflow
+- System prompt (EN only)
 
-### Phase 2 — Memory
-- [ ] Conversation history (SQLite)
-- [ ] Client profiles
-- [ ] Past proposal storage
+### Phase 2 — Backend ✅
+- FastAPI with 4 endpoints
+- Single-page UI (4 tabs)
+- SQLite schema (clients, proposals, messages)
+- Prompt injection guard (input + system prompt layers)
+- 96 passing tests
 
-### Phase 3 — SaaS
-- [ ] User authentication (JWT)
-- [ ] Multi-tenant support
-- [ ] PostgreSQL migration
-- [ ] HTTPS via Caddy
-- [ ] Payment integration
-
----
-
-## Security Notes
-
-- `.env` is excluded from git via `.gitignore` — never commit it
-- n8n is protected with basic auth
-- Ollama is bound to `localhost` only (not exposed publicly)
-- All LLM inference is local — no data sent to external APIs
-- Prompt injection guard is included in all system prompts
+### Phase 3 — SaaS ⏳
+- JWT authentication
+- Multi-tenant support
+- PostgreSQL migration
+- HTTPS via Caddy
+- CI/CD (GitHub Actions)
 
 ---
 
 ## Based On
 
-- [coleam00/local-ai-packaged](https://github.com/coleam00/local-ai-packaged) — base Docker stack
+[coleam00/local-ai-packaged](https://github.com/coleam00/local-ai-packaged) — base Docker stack (Apache 2.0)
 
 ---
 
 ## License
 
-MIT — free to use, modify, and sell.
+Apache 2.0

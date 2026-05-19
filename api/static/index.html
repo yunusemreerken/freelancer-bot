@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freelancer Bot</title>
+<style>
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #151820;
+    --panel:     #1c2030;
+    --border:    #262c3e;
+    --accent:    #4f7cff;
+    --accent2:   #38c9a4;
+    --danger:    #ff5f5f;
+    --text:      #e8eaf2;
+    --muted:     #6b7492;
+    --label:     #9aa0bb;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ─────────────────────────────── */
+  header {
+    padding: 28px 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .logo {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 10px var(--accent2);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .header-meta {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Main layout ─────────────────────────── */
+  main {
+    flex: 1;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .page-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 2rem;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 300;
+    margin-bottom: 40px;
+  }
+
+  /* ── Tabs ────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 32px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--text); background: var(--panel); }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 16px rgba(79,124,255,0.35);
+  }
+
+  .tab-icon { font-size: 1rem; }
+
+  /* ── Panel ───────────────────────────────── */
+  .tab-panel { display: none; animation: fadeIn 0.22s ease; }
+  .tab-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Form ────────────────────────────────── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  input, textarea, select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.9rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,124,255,0.12);
+  }
+
+  textarea { min-height: 120px; }
+
+  select option { background: var(--panel); }
+
+  .char-count {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .char-count.warn { color: var(--danger); }
+
+  /* ── Submit button ───────────────────────── */
+  .btn-submit {
+    margin-top: 24px;
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-submit:hover:not(:disabled) {
+    background: #3d6aee;
+    box-shadow: 0 4px 20px rgba(79,124,255,0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .btn-submit.loading .spinner { display: block; }
+  .btn-submit.loading .btn-label { opacity: 0.7; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error banner ────────────────────────── */
+  .error-banner {
+    display: none;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(255,95,95,0.08);
+    border: 1px solid rgba(255,95,95,0.25);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 0.85rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .error-banner.show { display: block; }
+
+  /* ── Modal ───────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13,15,20,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: overlayIn 0.2s ease;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalIn 0.22s ease;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-header {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-badge {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(56,201,164,0.12);
+    color: var(--accent2);
+    border: 1px solid rgba(56,201,164,0.2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .modal-close {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px; height: 32px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { color: var(--text); border-color: var(--accent); }
+
+  .modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-model {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .model-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  .modal-result {
+    font-size: 0.92rem;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .modal-footer {
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .btn-copy {
+    flex: 1;
+    padding: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-copy:hover { color: var(--text); border-color: var(--accent); }
+  .btn-copy.copied { color: var(--accent2); border-color: var(--accent2); }
+
+  .btn-close-footer {
+    padding: 10px 22px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-close-footer:hover { color: var(--text); border-color: var(--muted); }
+
+  /* ── Responsive ──────────────────────────── */
+  @media (max-width: 600px) {
+    header { padding: 20px 20px; }
+    main { padding: 32px 16px 60px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .tabs { flex-wrap: wrap; }
+    .tab-btn { flex: 1 1 40%; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Freelancer Bot
+  </div>
+  <div class="header-meta">Local AI · phi3:mini · v0.1.0</div>
+</header>
+
+<main>
+  <h1 class="page-title">AI Assistant</h1>
+  <p class="page-subtitle">Upwork & Fiverr için yerel yapay zeka aracı — verileriniz hiçbir yere gitmiyor.</p>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" data-tab="propose">
+      <span class="tab-icon">✍️</span> Propose
+    </button>
+    <button class="tab-btn" role="tab" data-tab="reply">
+      <span class="tab-icon">💬</span> Reply
+    </button>
+    <button class="tab-btn" role="tab" data-tab="estimate">
+      <span class="tab-icon">🧮</span> Estimate
+    </button>
+    <button class="tab-btn" role="tab" data-tab="decide">
+      <span class="tab-icon">⚖️</span> Decide
+    </button>
+  </div>
+
+  <!-- PROPOSE -->
+  <div class="tab-panel active" id="panel-propose">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Job Description *</label>
+          <textarea id="propose-job" placeholder="Upwork / Fiverr'dan kopyaladığın iş ilanını buraya yapıştır..." maxlength="2000"></textarea>
+          <div class="char-count" id="propose-job-count">0 / 2000</div>
+        </div>
+        <div class="form-group">
+          <label>My Skills</label>
+          <input type="text" id="propose-skills" placeholder="React, Node.js, Python...">
+        </div>
+        <div class="form-group">
+          <label>My Rate</label>
+          <input type="text" id="propose-rate" placeholder="$40/hr veya $500 fixed">
+        </div>
+      </div>
+      <button class="btn-submit" id="btn-propose">
+        <div class="spinner"></div>
+        <span class="btn-label">Proposal Oluştur</span>
+      </button>
+      <div class="error-banner" id="err-propose"></div>
+    </div>
+  </div>
+
+  <!-- REPLY -->
+  <div class="tab-panel" id="panel-reply">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Client Message *</label>
+          <textarea id="reply-message" placeholder="Müşterinin mesajını yapıştır..." maxlength="2000"></textarea>
+          <div class="char-count" id="reply-message-count">0 / 2000</div>
+        </div>
+        <div class="form-group full">
+          <label>Project Context</label>
+          <input type="text" id="reply-context" placeholder="Proje hakkında kısa bilgi (opsiyonel)">
+        </div>
+      </div>
+      <button class="btn-submit" id="btn-reply">
+        <div class="spinner"></div>
+        <span class="btn-label">Yanıt Oluştur</span>
+      </button>
+      <div class="error-banner" id="err-reply"></div>
+    </div>
+  </div>
+
+  <!-- ESTIMATE -->
+  <div class="tab-panel" id="panel-estimate">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Job Description *</label>
+          <textarea id="estimate-job" placeholder="Proje açıklamasını yapıştır..." maxlength="2000"></textarea>
+          <div class="char-count" id="estimate-job-count">0 / 2000</div>
+        </div>
+        <div class="form-group">
+          <label>My Rate</label>
+          <input type="text" id="estimate-rate" placeholder="$50/hr">
+        </div>
+        <div class="form-group">
+          <label>Experience Level</label>
+          <select id="estimate-level">
+            <option value="junior">Junior</option>
+            <option value="mid" selected>Mid</option>
+            <option value="senior">Senior</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-submit" id="btn-estimate">
+        <div class="spinner"></div>
+        <span class="btn-label">Fiyat Hesapla</span>
+      </button>
+      <div class="error-banner" id="err-estimate"></div>
+    </div>
+  </div>
+
+  <!-- DECIDE -->
+  <div class="tab-panel" id="panel-decide">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Job Description *</label>
+          <textarea id="decide-job" placeholder="İş ilanını yapıştır, kabul edip etmeyeceğini analiz edelim..." maxlength="2000"></textarea>
+          <div class="char-count" id="decide-job-count">0 / 2000</div>
+        </div>
+        <div class="form-group">
+          <label>Client Info</label>
+          <input type="text" id="decide-client" placeholder="Müşteri hakkında bilgi (opsiyonel)">
+        </div>
+        <div class="form-group">
+          <label>Budget</label>
+          <input type="text" id="decide-budget" placeholder="$500, $50/hr...">
+        </div>
+      </div>
+      <button class="btn-submit" id="btn-decide">
+        <div class="spinner"></div>
+        <span class="btn-label">Projeyi Analiz Et</span>
+      </button>
+      <div class="error-banner" id="err-decide"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span id="modal-title-text">Sonuç</span>
+        <span class="modal-badge" id="modal-badge">phi3:mini</span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-model">
+        <div class="model-dot"></div>
+        <span id="modal-model-text">Model: phi3:mini</span>
+      </div>
+      <div class="modal-result" id="modal-result"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-copy" id="btn-copy">
+        📋 Kopyala
+      </button>
+      <button class="btn-close-footer" id="btn-close-footer">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'http://127.0.0.1:8000/api/v1';
+
+  // ── Tab switching ─────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Char counters ─────────────────────────
+  function bindCharCount(textareaId, countId) {
+    const ta = document.getElementById(textareaId);
+    const ct = document.getElementById(countId);
+    ta.addEventListener('input', () => {
+      const len = ta.value.length;
+      ct.textContent = len + ' / 2000';
+      ct.classList.toggle('warn', len > 1800);
+    });
+  }
+
+  bindCharCount('propose-job',  'propose-job-count');
+  bindCharCount('reply-message','reply-message-count');
+  bindCharCount('estimate-job', 'estimate-job-count');
+  bindCharCount('decide-job',   'decide-job-count');
+
+  // ── Modal ─────────────────────────────────
+  const overlay = document.getElementById('modal-overlay');
+
+  function openModal(title, result, model) {
+    document.getElementById('modal-title-text').textContent = title;
+    document.getElementById('modal-badge').textContent = model || 'phi3:mini';
+    document.getElementById('modal-model-text').textContent = 'Model: ' + (model || 'phi3:mini');
+    document.getElementById('modal-result').textContent = result;
+    document.getElementById('btn-copy').textContent = '📋 Kopyala';
+    document.getElementById('btn-copy').classList.remove('copied');
+    overlay.classList.add('open');
+  }
+
+  function closeModal() { overlay.classList.remove('open'); }
+
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document.getElementById('btn-close-footer').addEventListener('click', closeModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  document.getElementById('btn-copy').addEventListener('click', function() {
+    const text = document.getElementById('modal-result').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      this.textContent = '✓ Kopyalandı';
+      this.classList.add('copied');
+      setTimeout(() => {
+        this.textContent = '📋 Kopyala';
+        this.classList.remove('copied');
+      }, 2000);
+    });
+  });
+
+  // ── API call helper ───────────────────────
+  async function callAPI(endpoint, body, btnId, errId, modalTitle, resultKey) {
+    const btn = document.getElementById(btnId);
+    const err = document.getElementById(errId);
+
+    err.classList.remove('show');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(API_BASE + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        const msg = data.detail || 'Bir hata oluştu.';
+        err.textContent = 'Hata ' + resp.status + ': ' + msg;
+        err.classList.add('show');
+        return;
+      }
+
+      openModal(modalTitle, data[resultKey], data.model);
+
+    } catch (e) {
+      err.textContent = 'Bağlantı hatası — API çalışıyor mu? (127.0.0.1:8000)';
+      err.classList.add('show');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  // ── Propose ───────────────────────────────
+  document.getElementById('btn-propose').addEventListener('click', () => {
+    const job = document.getElementById('propose-job').value.trim();
+    if (!job) return showErr('err-propose', 'Job description zorunlu.');
+    callAPI('/propose', {
+      job_description: job,
+      my_skills: document.getElementById('propose-skills').value.trim(),
+      my_rate:   document.getElementById('propose-rate').value.trim(),
+    }, 'btn-propose', 'err-propose', '✍️ Proposal', 'proposal');
+  });
+
+  // ── Reply ─────────────────────────────────
+  document.getElementById('btn-reply').addEventListener('click', () => {
+    const msg = document.getElementById('reply-message').value.trim();
+    if (!msg) return showErr('err-reply', 'Client message zorunlu.');
+    callAPI('/reply', {
+      client_message: msg,
+      context: document.getElementById('reply-context').value.trim(),
+    }, 'btn-reply', 'err-reply', '💬 Reply', 'reply');
+  });
+
+  // ── Estimate ──────────────────────────────
+  document.getElementById('btn-estimate').addEventListener('click', () => {
+    const job = document.getElementById('estimate-job').value.trim();
+    if (!job) return showErr('err-estimate', 'Job description zorunlu.');
+    callAPI('/estimate', {
+      job_description:  job,
+      my_rate:          document.getElementById('estimate-rate').value.trim(),
+      experience_level: document.getElementById('estimate-level').value,
+    }, 'btn-estimate', 'err-estimate', '🧮 Estimate', 'estimate');
+  });
+
+  // ── Decide ────────────────────────────────
+  document.getElementById('btn-decide').addEventListener('click', () => {
+    const job = document.getElementById('decide-job').value.trim();
+    if (!job) return showErr('err-decide', 'Job description zorunlu.');
+    callAPI('/decide', {
+      job_description: job,
+      client_info: document.getElementById('decide-client').value.trim(),
+      budget:      document.getElementById('decide-budget').value.trim(),
+    }, 'btn-decide', 'err-decide', '⚖️ Decide', 'analysis');
+  });
+
+  // ── Inline validation helper ──────────────
+  function showErr(errId, msg) {
+    const el = document.getElementById(errId);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+</script>
+</body>
+</html>

@@ -4,6 +4,11 @@ volumes:
   open-webui:
   caddy-data:
   caddy-config:
+  freelancer_data:
+  
+networks:
+  freelancer-net:
+    driver: bridge
 
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
@@ -17,12 +22,12 @@ x-n8n: &service-n8n
 
 x-ollama: &service-ollama
   image: ollama/ollama:latest
-  container_name: ollama
+  container_name: ollama-saas
   restart: unless-stopped
   expose:
     - 11434/tcp
   environment:
-    - OLLAMA_CONTEXT_LENGTH=4096
+    - OLLAMA_CONTEXT_LENGTH=512
     - OLLAMA_FLASH_ATTENTION=1
     - OLLAMA_MAX_LOADED_MODELS=1
   volumes:
@@ -30,7 +35,7 @@ x-ollama: &service-ollama
 
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
-  container_name: ollama-pull-model
+  container_name: ollama-pull-model-saas
   volumes:
     - ollama_storage:/root/.ollama
   entrypoint: /bin/sh
@@ -44,6 +49,8 @@ services:
   ollama-cpu:
     profiles: ["cpu"]
     <<: *service-ollama
+    networks:
+      - freelancer-net
 
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
@@ -54,7 +61,7 @@ services:
   # ─── WORKFLOW ─────────────────────────────────────────
   n8n:
     <<: *service-n8n
-    container_name: n8n
+    container_name: n8n-saas
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -66,12 +73,14 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+    networks:
+      - freelancer-net
 
   # ─── CHAT UI ──────────────────────────────────────────
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     restart: unless-stopped
-    container_name: open-webui
+    container_name: open-webui-saas
     ports:
       - "3000:8080"
     extra_hosts:
@@ -108,10 +117,26 @@ services:
   #     options:
   #       max-size: "1m"
   #       max-file: "1"
+# ─── API ──────────────────────────────────────────────
+  api:
+    build: ./api
+    container_name: freelancer-api-saas
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"  # sadece localhost, 0.0.0.0 değil
+    expose:
+      - "8000"
+    volumes:
+      - ./api/app:/app/app
+      - ./api/static:/app/static   # API ile ilgili statik dosyalar (örneğin, frontend build çıktısı)
+      - freelancer_data:/data        # Veritabanı ve diğer kalıcı veriler için
+
+
+    depends_on:
+      - ollama-cpu
+    networks:
+      - freelancer-net
+    
 
   # ─── COMING SOON ──────────────────────────────────────
-  # fastapi:         Phase 1 - backend API
   # postgres:        Phase 3 - SaaS database
-  # searxng:         Optional - local web search
-  # qdrant:          Optional - vector DB for RAG
-  # langfuse:        Optional - LLM monitoring
