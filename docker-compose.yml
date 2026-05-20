@@ -129,7 +129,7 @@ services:
     volumes:
       - ./api/app:/app/app
       - ./api/static:/app/static   # API ile ilgili statik dosyalar (örneğin, frontend build çıktısı)
-      - freelancer_data:/data        # Veritabanı ve diğer kalıcı veriler için
+      - ./data:/data        # Veritabanı ve diğer kalıcı veriler için
 
 
     depends_on:

@@ -2,4 +2,6 @@
 .env.test
 .DS_Store
 n8n/.DS_Store
-n8n/backups/.DS_Store
+n8n/backups/.DS_Store__pycache__/
+*.pyc
+data/
