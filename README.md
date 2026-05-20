@@ -67,6 +67,62 @@ docker exec -it ollama ollama pull phi3:mini
 ```
 
 ---
+## ⚙️ Environment and Database Configurations (SaaS vs. Local)
+
+The project can be executed in two distinct modes. To prevent database initialization errors (`sqlite3.OperationalError`), verify that your `.env` file's `DATABASE_URL` accurately matches your `docker-compose.yml` volume mappings:
+
+* **SaaS / Docker Mode:** `DATABASE_URL=sqlite:////data/freelancer.db`
+  * This mode strictly requires the volume mapping `- ./data:/data` inside your `docker-compose.yml` file.
+* **Developer (Local) Mode:** `DATABASE_URL=sqlite:///./freelancer.db`
+
+
+## 🛠️ Troubleshooting Common Docker Errors
+
+### 1. Port 11434 Already In Use
+**Error:** `bind: address already in use`
+* **Root Cause:** An existing Ollama container (such as `ollama-saas`) is active and occupying the network port.
+* **Solution:** Do not spin up a brand new container. Execute the model generation command directly inside the active, running container:
+  ```bash
+  docker exec -it ollama-saas ollama pull phi3:mini
+  ```
+
+### 2. Container Name Conflict
+**Error:** `The container name "/freelancer-api-saas" is already in use...`
+* **Root Cause:** A legacy or manually executed container instance is stopped but still occupying the namespace system-wide.
+* **Solution:** Force-delete the conflicting container from memory and re-run Compose:
+  ```bash
+  docker rm -f freelancer-api-saas
+  docker compose --profile cpu up -d
+  ```
+
+### 3. SQLite Storage Operational Failure
+**Error:** `sqlite3.OperationalError: unable to open database file`
+* **Root Cause:** The application code inside the container is targeting the absolute directory path `/data/`, but Docker cannot access the folder or write permissions are restricted on the host machine.
+* **Solution:** Create the baseline target data directory on your host root workspace and expand its filesystem read/write privileges:
+  ```bash
+  mkdir -p data && chmod 777 data
+  ```
+
+---
+
+## 🚀 Clean Turnkey Setup Commands
+
+If container naming structures or file paths become corrupted or mixed up across paths, execute this sequence to wipe conflicting configurations and rebuild a fresh, stable stack:
+
+```bash
+# 1. Gracefully terminate and clear all active profile services
+docker compose --profile cpu down
+
+# 2. Reset host storage architectures and expand privileges
+mkdir -p data && chmod -R 777 data
+
+# 3. Spin up the localized stack using the designated CPU infrastructure
+docker compose --profile cpu up -d
+
+# 4. Pull the primary core LLM directly into your active runtime container
+docker exec -it ollama-saas ollama pull phi3:mini
+```
+
 
 ## Project Structure
 
